@@ -1,0 +1,18 @@
+Name: Albert Olivella
+
+Project Title: Predictive Maintenance
+
+Industry Sector: Industry
+
+Predict production stops 30min before it happen checking data production using classification models to predict stops.
+and when the system predicts that fail, solutions or advices to fix it before happen.
+All this data I want to create an API in Real Time that shows probabilities to stop production, which cause. [Sensor, mechanical, ...] and propper solution checking technical manual for each device 
+
+
+problems: Outliers, dataset with measure sensors, missing data production. 
+and another problem is how to board it.
+Using classification to predicts failures already detected in dataset or find the pattern that mean everything Works perfectly and in in any case the patter is lost, advice it. 
+
+I find a notebook that creates like a factory data simulation, where i can select how many assembly lines want and how many days.
+
+
