@@ -20,6 +20,17 @@ TOOLS_SCHEMA = [
                       "(a similarity heuristic, not a trained classifier). Useful when asked which sensor is "
                       "likely to cause the next failure."),
      "parameters": {"type": "object", "properties": {"station": {"type": "string"}}, "required": ["station"]}},
+    {"type": "function", "name": "get_top_failing_sensor",
+     "description": ("Across ALL 8 stations, find which sensor has historically triggered the most "
+                      "real Mechanical/Electrical failures. Use this for global questions like "
+                      "'which sensor fails the most?' or 'what's the most common failure sensor overall?' "
+                      "-- no station needed."),
+     "parameters": {"type": "object", "properties": {}}},
+    {"type": "function", "name": "get_feature_importance",
+     "description": ("Get the top 5 features the station's model relies on most in general "
+                      "(global importance, not tied to the current minute). Useful when asked which "
+                      "sensors matter most for predicting failures at a station."),
+     "parameters": {"type": "object", "properties": {"station": {"type": "string"}}, "required": ["station"]}},
     {"type": "function", "name": "get_station_sensors",
      "description": "Get the list of sensors relevant to a specific station (which sensors exist/matter there).",
      "parameters": {"type": "object", "properties": {"station": {"type": "string"}}, "required": ["station"]}},

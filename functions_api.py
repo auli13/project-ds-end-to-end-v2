@@ -26,7 +26,7 @@ def predict_station_risk(station: str) -> dict:
 
 
 def get_prob_fail_sensor(station: str) -> dict:
-    # Estimate which sensor is closest to its known failure threshold.
+    # Estimate which sensor is closest to its known failure threshold, RIGHT NOW, for a specific station.
     r = result[station]
     row = r['last_row'].iloc[0]
     prob_fail_sensor, distances = _closest_sensor(row, r['sensors'])
@@ -40,6 +40,41 @@ def get_prob_fail_sensor(station: str) -> dict:
     }
 
 
+def get_top_failing_sensor() -> dict:
+    # Across ALL 8 stations, count how many times each sensor was the real trigger
+    # of a Mechanical/Electrical failure, and return the most frequent one overall.
+    from collections import Counter
+    counts = Counter()
+    for station in result:
+        test_df = result[station]['test_df']
+        if 'trigger_sensor' in test_df.columns:
+            counts.update(test_df['trigger_sensor'].dropna().tolist())
+
+    if not counts:
+        return {'top_sensor': None, 'all_counts': {}}
+
+    top_sensor, top_count = counts.most_common(1)[0]
+    return {
+        'top_sensor': top_sensor,
+        'top_count': top_count,
+        'all_counts': dict(counts.most_common()),
+    }
+
+
+def get_feature_importance(station: str) -> dict:
+    # Get the top features the station's model relies on most, in general (not just right now).
+    r = result[station]
+    importances = r['model'].feature_importances_
+    feature_cols = r['feature_cols']
+    ranked = sorted(zip(feature_cols, importances), key=lambda x: x[1], reverse=True)
+    top5 = ranked[:5]
+    return {
+        'station': station,
+        'model_used': r['model_key'],
+        'top_features': [{'feature': f, 'importance': round(float(v), 4)} for f, v in top5],
+    }
+
+
 def get_station_sensors(station: str) -> dict:
     # Get the list of sensors for ST.
     sensors = result[station]['sensors']
@@ -47,7 +82,7 @@ def get_station_sensors(station: str) -> dict:
 
 
 def get_sensor_threshold(station: str, sensor: str) -> dict:
-    # Get the detected failure threshold for a specific sensor at a specific ST."""
+    # Get the detected failure threshold for a specific sensor at a specific ST.
     sensors = result[station]['sensors']
     return {'station': station, 'sensor': sensor, 'threshold_mean': sensors.get(sensor)}
 
@@ -149,6 +184,8 @@ def get_step_from_datetime(dt) -> int:
 ALL_TOOLS_FUNCTIONS = {
     "predict_station_risk": predict_station_risk,
     "get_prob_fail_sensor": get_prob_fail_sensor,
+    "get_top_failing_sensor": get_top_failing_sensor,
+    "get_feature_importance": get_feature_importance,
     "get_station_sensors": get_station_sensors,
     "get_sensor_threshold": get_sensor_threshold,
     "get_downtime_history": get_downtime_history,
