@@ -1,96 +1,140 @@
-![logo_ironhack_blue 7](https://user-images.githubusercontent.com/23629340/40541063-a07a0a8a-601a-11e8-91b5-2f13e4e6b441.png)
+# 🏭 Factory Predictive Maintenance
 
-# End to End Data Science Project
+> Predict a Mechanical/Electrical failure 30 minutes before it happens — across an 8-station factory line — and explain why, live, through a GenAI-powered dashboard.
 
-### **Final Project**
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)
+![XGBoost](https://img.shields.io/badge/XGBoost-scikit--learn-orange?style=flat)
+![Gemini](https://img.shields.io/badge/Google_Gemini-3.7_Flash-4285F4?style=flat&logo=google&logoColor=white)
 
-*   This is an individual project.
-*   Presentations will be held on the final day of the course.
-*   Ensure all labs and projects are submitted by the end of the bootcamp.
+**Live app:** `<PENDING — add your deployed Streamlit Community Cloud URL here>`
 
-## **Introduction**
+---
 
-Welcome to your final project! The goal of this project is to apply your data science skills learned throughout the bootcamp by completing an end-to-end analysis. The project will demonstrate your proficiency in skills required for your career path and help you develop a portfolio to showcase to potential recruiters.
+## 📌 Overview
 
-We recommend exploring a topic and dataset that personally interests you to make the project more engaging and rewarding. Your project can focus on:
+Unplanned downtime is expensive, and often preventable. This project simulates an 8-station factory line, trains a model per station to catch Mechanical/Electrical failures ahead of time, and wraps it all in an interactive dashboard with a Gemini-powered assistant that explains *why*, not just *what*.
 
-*   **Generative AI** 
-*   **Machine Learning**
-*   **Deep Learning**
-*   **Computer vision**
+1. **Simulate** a realistic 8-station factory line with physics-based failures
+2. **Engineer** causal, leak-free features from sensor readings
+3. **Train & calibrate** Random Forest / XGBoost per station, tuned to a station-specific Recall floor
+4. **Deploy** through a Streamlit dashboard with an 8-tool Gemini agent
 
-## **Project Overview**
+---
 
-### **1- Data Collection:**
+## 🔁 Pipeline
 
-*   Select a business problem to address.
-*   Locate and gather necessary data.
+```
+Factory Simulator → Clean & Split (80/20, chronological) → Feature Engineering
+   → Train RF vs XGBoost (per station) → Calibrate Threshold → Export
+   → Streamlit Dashboard + Gemini Agent
+```
 
-### **2. Data Preparation: Organize and clean your data**
+---
 
-Any technique you use to prepare your data depends on the type of data you have and the requirements of your chosen model. Data preparation is a crucial step to ensure your model performs well. Here are some common examples of tasks you might perform:
+## ✨ Features
 
-*   Handle outliers and missing values.
-*   Perform type casting and feature selection.
-*   Convert categorical data to numerical.
-*   Apply statistical methods to explore and understand data distributions, correlations, and variances.
+- 🏭 8-station synthetic factory line, minute-level data, reproducible (fixed seed)
+- 🎯 Per-station model, calibrated to a station-specific Recall floor (80%–90%)
+- 🔍 Explainable alerts — names the real cause *and* the sensor that triggered it
+- ⏱️ Time-travel dashboard — scrub through the test period, jump to any date/time
+- 💬 Gemini tool-calling agent — 8 tools, zero hallucinated numbers (every answer comes from a real function call)
+- 🛡️ Leak-free by design — sensor selection never touches the test set
 
-### **3.Exploratory Data Analysis (EDA):**
+---
 
-*   Analyze variables, patterns, and correlations.
-*   Generate insights that can guide your narrative.
-*   Apply statistical techniques and visualization to examine feature relationships.
-*    Use Tableau to create a dashboard or some plots.
-*   Optional SQL Component
+## 📊 Key Results
 
-### **4. Machine Learning and Deep Learning:** 
+Best model: **XGBoost**, selected per station by Precision at a fixed Recall floor (Random Forest trained and compared, but XGBoost wins Precision in all 8 stations).
 
-*   Experiment with various models and hyperparameters.
-*   feature engineering and preprocessing, model selection and evaluation
-*   Define evaluation metrics clearly.
-*   Justification for the best model selection.
+| Metric | Value |
+|---|---|
+| Average Accuracy | ≈ 94.1% |
+| Average Precision | ≈ 74.1% (range 70.7%–78.0%) |
+| Recall | 80%–90% per station (station-specific floor) |
 
-### **5. Gen AI**
+**Why Mechanical/Electrical only?** Validated empirically, not assumed: combining all 6 downtime causes into one target collapsed average Recall from ~90% to ~49%, because "positive" minutes jumped from ~16% to ~72% of the dataset.
 
-*   Integrate some of these technologies into your pipeline, such as **LLMs, RAG, AI agents, text-to-speech, speech-to-text, or VLMs.**
-*   You can develop an AI-powered chatbot that assists users in a practical domain (e.g., healthcare, education, customer service, or legal advice). Make it multimodal or voice-enabled.
+**Data leakage caught and fixed:** sensor thresholds were originally computed on each station's full history, including the future test window — fixed by using the training split only.
 
-### **Helpful Resources:**
+**Why Recall floors differ by station:** stations with fewer or less informative sensors can't sustain a high Recall without Precision collapsing. ST7 has only one sensor (`energy_consumption`); forcing the same 90% Recall floor used elsewhere crashes its Precision to **12.8%** — versus **72.5%** at its actual, station-specific 80% floor. This was tested directly, not assumed: it's the project's key "biggest challenge" finding.
 
-*   **[Hugging Face](https://huggingface.co/)**
-*   **[LangChain](https://www.langchain.com/)**
+---
 
-### **Data Sources:**
+## 🗂️ Project Structure
 
-*   [Kaggle](https://www.kaggle.com/)
-*   [UCI Machine Learning Repository](https://archive.ics.uci.edu/)
-*   [PorData](https://www.pordata.pt/pt)
-*   [And many more](https://medium.com/@LearnPythonProgramming/best-data-sources-for-datasets-beyond-kaggle-98aac51e971e)
+```
+project/
+│
+├── app.py                       # Streamlit dashboard + Gemini tool-calling agent
+├── functions_api.py             # Reusable prediction/explanation logic
+├── FinalProject_PM_opt.ipynb    # Full pipeline: simulate → clean → engineer → train → evaluate
+├── factory_simulator.ipynb      # Synthetic 8-station factory data generator
+├── trained_models/
+│   └── trained_models.pkl       # Slim per-station artifact (winning model only)
+├── source/output/               # Simulator CSV outputs
+├── images_hmi/                  # Dashboard station icons
+├── FPM.pptx                     # Project presentation
+├── requirements.txt
+└── README.md
+```
 
-## **Mandatory Requirements:**
+---
 
-*   A **clear** explanation of your dataset and project goals.
-*   Documented project implementation, highlighting key decisions, challenges faced, and how they were addressed at each stage.
-*   **Insights** from exploratory data analysis.
-*   Well-explained **visualizations** showcasing key findings.
-*   A **GitHub** repository containing:
-   *   Well-**documented** Python code.
-   *   Optional **SQL** database
-   *   A **README** explaining the project goals, methodology, and results.
-   *   **requirements.txt**
-* **Project Planning:**
-   *   Use Trello, Kanban... for tracking progress.
-   *   Create a repository and commit/push frequently.
+## 🧩 Components
 
-*   A presentation (15-20 minutes) explaining your findings.
+### 🏭 Factory Simulator
+Generates 30 days × 8 stations of minute-level sensor + downtime data, with a physical failure model per station (`factory_simulator.ipynb`).
 
-### **Nice-to-Have:**
+### 📈 Feature Engineering
+Causal, rolling-window features per sensor — `mean15`, `std15`, `slope15`, `curr` — with a 30-minute-ahead failure target, computed with no test-set leakage.
 
-*   App to showcase 
-*   Transform the project into a usable product
-*   Create a repository and commit/push frequently.
+### 🤖 Per-Station Models
+Random Forest vs. XGBoost, trained and evaluated independently for each of the 8 stations, with a decision threshold calibrated via the Precision-Recall curve at a station-specific Recall floor.
 
-## **Deliverables**
+### 💬 Gemini Tool-Calling Agent
+8 Python tools — the LLM only decides *what* to call and how to phrase the answer, never computes anything itself:
+- `predict_station_risk(station)` — current failure probability
+- `get_prob_fail_sensor(station)` — sensor closest to its failure threshold right now
+- `get_top_failing_sensor()` — across all 8 stations, which sensor has historically triggered the most failures
+- `get_feature_importance(station)` — top features the station's model relies on globally
+- `get_station_sensors(station)`, `get_sensor_threshold(station, sensor)` — model transparency
+- `get_downtime_history(station, cause)` — aggregate downtime stats
+- `get_model_performance(station)` — Recall/Precision/F1 for the deployed model
 
-*   **GitHub** repository.
-*   **Final presentation** **slides** summarizing project work and insights.
+### 🖥️ Streamlit App
+Time-travel slider over the held-out test period, per-station risk cards with explainable failure messages, and a chat panel wired to the agent above.
+
+
+## 🛠️ Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| Python, pandas | Core language & data handling |
+| scikit-learn, XGBoost | Model training & evaluation |
+| Google Gemini (Interactions API) | Tool-calling agent |
+| Streamlit | Interactive dashboard |
+| Matplotlib/Seaborn | EDA & results charts |
+
+---
+
+## ⚠️ Known Limitations
+
+- Trained entirely on **synthetic** simulator data — real-machine sensor drift/wear is not represented
+- Only Mechanical/Electrical failures are predicted; other stoppage causes are shown as ground truth but out of scope (validated empirically — see *Key Results*)
+- Stations with very few sensors (e.g., ST7, 1 sensor) cap how high a Recall floor can go before Precision becomes unusable — this is a real sensor-coverage limit, not a modeling choice
+- `get_prob_fail_sensor` is a similarity heuristic (distance to a historical failure threshold), not a trained classifier — too few labeled events per sensor to train one reliably
+- A 5-configuration hyperparameter search gave only marginal, inconsistent gains over the hand-chosen defaults
+- Gemini free-tier rate limits (5 req/min) can still be hit under heavy chat use; the app retries once, then fails gracefully
+
+---
+
+## 🔮 Next Steps
+
+- Stream real sensor data from the PLC/SCADA historian (periodic CSV export) instead of the offline simulator; retrain on a schedule using the same pipeline, promoting a new model only if it beats the current one (champion/challenger) on the same test set
+- Add an unsupervised anomaly-detection model (e.g., IsolationForest) alongside the supervised model, to catch concept drift the supervised model alone would miss
+- True future holdout: simulate additional unseen days beyond the training window
+- Model Blocked/Starved stoppages with line-balancing (neighboring-station) features
+- Optional: voice-enabled assistant for hands-free shop-floor use
+
+---
